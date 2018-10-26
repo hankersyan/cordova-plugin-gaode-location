@@ -1,11 +1,11 @@
-# cordova-plugin-gaode-location
+# cordova-plugin-geolocation-gaode
 
 基于cordova封装的高德地图定位插件(暂时只支持单次定位)
 
 # Install
 
 ```bash
-ionic plugin add https://github.com/daihere1993/cordova-plugin-gaode-location --variable ANDROIDKEY=YOU_ANDROIDKEY --variable IOSKEY=YOU_IOSKEY
+cordova plugin add https://github.com/hankersyan/cordova-plugin-geolocation-gaode --variable ANDROIDKEY=YOU_ANDROIDKEY --variable IOSKEY=YOU_IOSKEY
 ```
 
 # Parameters
@@ -50,31 +50,25 @@ Android端和iOS端各自有各自的参数
 # Useage
 
 ```Javascript
-var onLocationReady = $q.defer();
-// 定制参数
 var para = {
-  appName: 'your app name',
-  android: {
-    // set some parameters
-  },
-  ios: {
-    // set some parameters
-  }
+	appName: 'your app name',
+	android: {
+		// set some parameters
+		locationMode:1
+	},
+	ios: {
+		// set some parameters
+		accuracy:1
+	}
 }
-// 配置手機定位
+// 配置
 GaodeLocation.configLocation(para, function (successMsg) {
-  // do something
-  onLocationReady.resolve();
+	// 定位
+	GaodeLocation.getLocation({ retGeo: true }, function (locationInfo) {
+		// do something
+		console.log(JSON.stringify(locationInfo));
+	}, function (err) {
+		console.log(err);
+	});
 });
-
-// 在啟動手機定位后即可通過'getLocation'隨時獲取最新的位置信息，注意一定要再手机定位启动成功之后执行，否则会报错
-onLocationReady
-  .promise
-  .then(function () {
-    GaodeLocation.getLocation({ retGeo: true }, function (locationInfo) {
-      // do something
-    }, function (err) {
-      console.log(err);
-    });
-  });
 ```

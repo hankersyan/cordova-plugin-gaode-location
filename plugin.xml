@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="cordova-plugin-gaode-location" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
-    <name>cordova-plugin-gaode-location</name>
+<plugin id="cordova-plugin-geolocation-gaode" version="1.10.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>cordova-plugin-geolocation-gaode</name>
     <preference name="ANDROIDKEY" />
     <preference name="IOSKEY" />
-    <js-module name="cordova-plugin-gaode-location" src="www/cordova-plugin-gaode-location.js">
+    <js-module name="cordova-plugin-geolocation-gaode" src="www/cordova-plugin-gaode-location.js">
         <clobbers target="GaodeLocation" />
     </js-module>
 
@@ -34,7 +34,7 @@
         <source-file src="src/android/GaodeLocation.java" target-dir="src/daihere/cordova/plugin" />
 
         <!-- Gaode skd -->
-        <source-file src="src/android/libs/Gaode_Location_SDK_V3.5.0.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/Gaode_Location_SDK_V3.5.0.jar" target-dir="app/libs"/>
     </platform>
 
     <!-- iOS -->
@@ -68,10 +68,6 @@
         <config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
             <string>$LOCATION_WHEN_IN_USAGE_DESCRIPTION</string>
         </config-file>
-        <preference name="LOCATION_ALWAYS_AND_WHEN_IN_USAGE_DESCRIPTION" default="请选择'始终允许'以保证应用的正常运行" />
-        <config-file target="*-Info.plist" parent="NSLocationAlwaysAndWhenInUseUsageDescription">
-            <string>$LOCATION_ALWAYS_AND_WHEN_IN_USAGE_DESCRIPTION</string>
-        </config-file>
         <config-file target="*-Info.plist" parent="NSAppTransportSecurity">
           <dict>
               <key>NSAllowsArbitraryLoads</key>
@@ -91,7 +87,6 @@
         <framework src="SystemConfiguration.framework" />
         <framework src="CoreTelephony.framework" />
         <framework src="libz.tbd" />
-        <framework src="libstdc++.6.0.9.tbd" />
         <framework src="libc++.tbd" />
         <framework src="JavaScriptcore.framework" />
         <framework src="SystemConfiguration.framework"/>
