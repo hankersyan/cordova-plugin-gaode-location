@@ -5,7 +5,7 @@
 # Install
 
 ```bash
-cordova plugin add https://github.com/hankersyan/cordova-plugin-geolocation-gaode --variable ANDROIDKEY=YOU_ANDROIDKEY --variable IOSKEY=YOU_IOSKEY
+cordova plugin add cordova-plugin-geolocation-gaode --variable ANDROIDKEY=YOU_ANDROIDKEY --variable IOSKEY=YOU_IOSKEY
 ```
 
 # Parameters
