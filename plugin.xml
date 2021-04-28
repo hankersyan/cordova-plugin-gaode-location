@@ -1,8 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="cordova-plugin-geolocation-gaode" version="1.10.2" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-geolocation-gaode" version="1.11.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>cordova-plugin-geolocation-gaode</name>
     <preference name="ANDROIDKEY" />
     <preference name="IOSKEY" />
+    <preference name="TENCENTMAPSDK" />
+
     <js-module name="cordova-plugin-geolocation-gaode" src="www/cordova-plugin-gaode-location.js">
         <clobbers target="GaodeLocation" />
     </js-module>
@@ -28,13 +30,18 @@
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service android:name="com.amap.api.location.APSService"></service>
             <meta-data android:name="com.amap.api.v2.apikey" android:value="$ANDROIDKEY"></meta-data>
+            <!-- QQ -->
+            <meta-data android:name="TencentMapSDK" android:value="$TENCENTMAPSDK" />
         </config-file>
 
         <!-- Plugin souce code -->
         <source-file src="src/android/GaodeLocation.java" target-dir="src/daihere/cordova/plugin" />
 
         <!-- Gaode skd -->
-        <source-file src="src/android/libs/Gaode_Location_SDK_V3.5.0.jar" target-dir="app/libs"/>
+        <source-file src="src/android/libs/TencentMapSDK_Raster_v_1.3.4.1.jar" target-dir="app/libs"/>
+
+        <framework src="src/android/qq.gradle" custom="true" type="gradleReference"/>
+
     </platform>
 
     <!-- iOS -->

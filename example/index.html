@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <title>gaode</title>
+</head>
+
+<body>
+    <div class="app">
+        <h1>Apache Cordova</h1>
+        <div id="deviceready" class="blink">
+            <p class="event listening">Connecting to Device</p>
+            <p class="event received">Device is Ready</p>
+            <textarea id="result" style="width: 100%;height: 80px;"></textarea>
+            <input type="button" id="asr" value="get-Location"
+              style="padding: 30px;display: block;min-height: 60px;min-width: 120px;margin: auto;"
+              onclick="getLoc()" />
+        </div>
+    </div>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+</body>
+<script>
+function getLoc() {
+    var para = {
+        appName: 'TEST_GAODE',
+        android: {
+            // set some parameters
+            locationMode:1
+        },
+        ios: {
+            // set some parameters
+            accuracy:1
+        }
+    }
+    // 配置
+    GaodeLocation.configLocation(para, function (successMsg) {
+        // 定位
+        GaodeLocation.getLocation({ retGeo: true }, function (locationInfo) {
+            // do something
+            console.log(JSON.stringify(locationInfo));
+            document.getElementById('result').value = JSON.stringify(locationInfo);
+        }, function (err) {
+            console.log(err);
+        });
+    });
+}
+</script>
+</html>

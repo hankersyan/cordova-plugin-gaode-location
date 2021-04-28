@@ -7,11 +7,10 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.amap.api.location.AMapLocation;
-import com.amap.api.location.AMapLocationClient;
-import com.amap.api.location.AMapLocationClientOption;
-import com.amap.api.location.AMapLocationListener;
-import com.amap.api.location.AMapLocationClientOption.AMapLocationMode;
+import com.tencent.map.geolocation.TencentLocation;
+import com.tencent.map.geolocation.TencentLocationListener;
+import com.tencent.map.geolocation.TencentLocationManager;
+import com.tencent.map.geolocation.TencentLocationRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,14 +26,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.provider.Settings;
 import android.telecom.Call;
+import android.util.Log;
+import android.widget.Toast;
+
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
 
 public class GaodeLocation extends CordovaPlugin {
 
+    public static String TAG = "GaodeLocation";
     public  Context context = null;
-    // AMapLocationClient类对象
-    public AMapLocationClient locationClient = null;
-    // 定位参数
-    public AMapLocationClientOption locationOption = null;
+
+    private TencentLocationManager mLocationManager;
+
     // JS回掉接口对象
     public static CallbackContext cb = null;
     // 权限申请码
@@ -89,12 +93,38 @@ public class GaodeLocation extends CordovaPlugin {
             callbackContext.error("参数格式错误");
             return;
         }
-        // 初始化Client
-        locationClient = new AMapLocationClient(this.webView.getContext());
-        // 初始化定位参数
-        locationOption = getOption(androidPara, callbackContext);
-        // 设置定位监听函数
-        locationClient.setLocationListener(locationListener);
+
+        mLocationManager = TencentLocationManager.getInstance(this.cordova.getActivity().getApplicationContext());
+        // 设置坐标系为 gcj-02, 缺省坐标为 gcj-02, 所以通常不必进行如下调用
+        mLocationManager.setCoordinateType(TencentLocationManager.COORDINATE_TYPE_GCJ02);
+
+        TencentLocationRequest request = TencentLocationRequest.create()
+                .setInterval(5*1000) // 设置定位周期
+                .setAllowGPS(true)  //当为false时，设置不启动GPS。默认启动
+                .setQQ("10001")
+                .setRequestLevel(3); // 设置定位level
+        //也可以使用子线程，但是必须包含Looper
+        int re = mLocationManager.requestSingleFreshLocation(request, new TencentLocationListener(){
+            @Override
+            public void onLocationChanged(TencentLocation location, int error,
+                                          String reason) {
+                Log.i(TAG, "lat: " + location.getLatitude() + ",long: " + location.getLongitude() + ",address: " + location.getAddress());
+            }
+
+            @Override
+            public void onStatusUpdate(String name, int status, String desc) {
+                Log.i(TAG, "name: " + name + "status: " + status + "desc: " + desc);
+            }
+        } , this.cordova.getActivity().getMainLooper());
+        Log.i(TAG, "re: " + re);
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            requirePermission();
+        }
+
+        if (!judgeLocationServerState()) {
+            //没有打开位置服务开关，这里设计交互逻辑引导用户打开位置服务开关
+        }
 
         callbackContext.success("初始化成功");
     }
@@ -103,102 +133,21 @@ public class GaodeLocation extends CordovaPlugin {
      * 获取定位
      */
     public void getLocation(final CordovaArgs args, final CallbackContext callbackContext) {
-        Boolean retGeo;
-        JSONObject params;
-        cb = callbackContext;
-
-        try {
-            params = args.getJSONObject(0);
-            retGeo = params.has("retGeo") ? params.getBoolean("retGeo") : false;
-
-            locationOption.setNeedAddress(retGeo);
-            locationClient.setLocationOption(locationOption);
-            locationClient.startLocation();
-        } catch (JSONException e) {
-            callbackContext.error("参数格式错误");
-            return;
-        }
-    }
-
-    /**
-     * 定位监听函数
-     */
-    AMapLocationListener locationListener = new AMapLocationListener() {
-        @Override
-        public void onLocationChanged(AMapLocation location) {
-            JSONObject locationInfo = new JSONObject();
-            if (null != location) {
-                if (location.getErrorCode() == 0) {
-                    try {
-                        // 纬度
-                        locationInfo.put("latitude", location.getLatitude());
-                        // 经度
-                        locationInfo.put("longitude", location.getLongitude());
-                        // 国家
-                        locationInfo.put("country", location.getCountry());
-                        // 省
-                        locationInfo.put("province", location.getProvince());
-                        // 市
-                        locationInfo.put("city", location.getCity());
-                        // 区
-                        locationInfo.put("district", location.getDistrict());
-                        // 地址
-                        locationInfo.put("address", location.getAddress());
-
-                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, locationInfo);
-                        pluginResult.setKeepCallback(true);
-                        cb.sendPluginResult(pluginResult);
-                    } catch (JSONException e) {
-                        cb.error("参数错误，请检查参数格式");
-                    }
-                } else {
-                    JSONObject sb = new JSONObject();
-                    try {
-                        sb.put("errorCode", location.getErrorCode() + "\n");
-                        sb.put("errorInfo", location.getErrorInfo() + "\n");
-                        sb.put("errorDetail", location.getLocationDetail() + "\n");
-                    } catch (JSONException e) {
-                        cb.error("参数错误，请检查参数格式");
-                    }
-                    cb.error(sb);
-                }
-            }
-        }
-    };
-
-
-    /**
-     * 初始化clientOption
-     */
-    private AMapLocationClientOption getOption(JSONObject params, CallbackContext callbackContext) {
-        AMapLocationClientOption mOption = new AMapLocationClientOption();
-
-        try {
-            // 定位模式，默认为高精度
-            AMapLocationMode mode = null;
-            int modeCode = params.has("mode") ? params.getInt("mode") : 1;
-            switch (modeCode) {
-                case 1: mode = AMapLocationMode.Hight_Accuracy; break;
-                case 2: mode = AMapLocationMode.Device_Sensors; break;
-                case 3: mode = AMapLocationMode.Battery_Saving; break;
-            }
-            // 超时时间，仅在设备模式下无效，初始为30秒
-            long timeOut = params.has("timeOut") ? params.getLong("timeOut") : 30000;
-            // 是否单次定位，目前暂时只支持单次定位
-            Boolean onceLocation = true;
-            // 是否等待wife刷新
-            Boolean onceLocationLatest = true;
-
-            mOption.setLocationMode(mode);
-            mOption.setHttpTimeOut(timeOut);
-            mOption.setOnceLocation(onceLocation);
-            mOption.setOnceLocationLatest(onceLocationLatest);
-
-        } catch (JSONException e) {
-            cb.error("参数错误，请检查参数格式");
-        }
-
-        return mOption;
+//        Boolean retGeo;
+//        JSONObject params;
+//        cb = callbackContext;
+//
+//        try {
+//            params = args.getJSONObject(0);
+//            retGeo = params.has("retGeo") ? params.getBoolean("retGeo") : false;
+//
+//            locationOption.setNeedAddress(retGeo);
+//            locationClient.setLocationOption(locationOption);
+//            locationClient.startLocation();
+//        } catch (JSONException e) {
+//            callbackContext.error("参数格式错误");
+//            return;
+//        }
     }
 
     /**
@@ -308,4 +257,38 @@ public class GaodeLocation extends CordovaPlugin {
         }
         return true;
     }
+
+    @AfterPermissionGranted(1)
+    private void requirePermission() {
+        String[] permissions = {
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+        String[] permissionsForQ = {
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                //Manifest.permission.ACCESS_BACKGROUND_LOCATION, //target为Q时，动态请求后台定位权限
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+        if (Build.VERSION.SDK_INT >= 29 ? EasyPermissions.hasPermissions(this.cordova.getContext(), permissionsForQ) :
+                EasyPermissions.hasPermissions(this.cordova.getContext(), permissions)) {
+            Toast.makeText(this.cordova.getContext(), "权限OK", Toast.LENGTH_LONG).show();
+        } else {
+            EasyPermissions.requestPermissions(this.cordova.getActivity(), "需要权限",
+                    1, Build.VERSION.SDK_INT >= 29 ? permissionsForQ : permissions);
+        }
+    }
+
+    private boolean judgeLocationServerState() {
+        try {
+            return Settings.Secure.getInt(this.cordova.getActivity().getContentResolver(), Settings.Secure.LOCATION_MODE) > 1;
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }
